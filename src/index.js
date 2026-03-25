@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { getAdapter, getDefault, status: adapterStatus } = require('./adapters');
 const personas = require('./personas');
 
@@ -81,22 +82,19 @@ app.get('/status', (req, res) => {
 
 // ── GET /health ───────────────────────────────────────────────────────────────
 
+// ── POST /alexa ───────────────────────────────────────────────────────────────
+// Alexa Skill endpoint — recebe payload nativo da skill e retorna formato Alexa
+
+app.post('/alexa', require('./routes/alexa'));
+app.get('/alexa', (_, res) => res.json({ ok: true, endpoint: 'alexa skill' }));
+
 app.get('/health', (_, res) => res.json({ ok: true }));
 
-// ── GET / ─────────────────────────────────────────────────────────────────────
+// ── Frontend estático ─────────────────────────────────────────────────────────
 
-app.get('/', (_, res) => {
-  res.json({
-    service: 'cafofo-brain',
-    endpoints: [
-      'POST /prompt  — { persona?, message, context? }',
-      'GET  /personas',
-      'POST /personas/reload',
-      'GET  /status',
-      'GET  /health',
-    ],
-  });
-});
+const publicDir = path.join(__dirname, '../public');
+app.use(express.static(publicDir));
+app.get('*', (_, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
 const PORT = process.env.PORT || 3030;
 app.listen(PORT, () => console.log(`[brain] rodando na porta ${PORT}`));

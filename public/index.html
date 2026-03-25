@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cafofo·brain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #08080e;
+      --surface:      #0f0f1a;
+      --surface2:     #161624;
+      --border:       #1e1e30;
+      --text:         #ddddf0;
+      --text-muted:   #5a5a7a;
+      --text-dim:     #2e2e48;
+      --accent:       #f0a832;
+      --accent-dim:   rgba(240,168,50,0.1);
+      --accent-glow:  rgba(240,168,50,0.25);
+      --error:        #ff5555;
+      --radius:       7px;
+      --ease:         cubic-bezier(0.4,0,0.2,1);
+    }
+    .alexa-active {
+      --accent:      #4facfe;
+      --accent-dim:  rgba(79,172,254,0.1);
+      --accent-glow: rgba(79,172,254,0.3);
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text);
+      font-family:'JetBrains Mono',monospace; font-size:14px; line-height:1.6; }
+
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image: radial-gradient(circle, var(--text-dim) 1px, transparent 1px);
+      background-size:32px 32px; opacity:.5;
+    }
+
+    .app { position:relative; z-index:1; height:100vh; display:flex; flex-direction:column;
+      max-width:860px; margin:0 auto; }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    header {
+      display:flex; align-items:center; gap:14px; padding:11px 20px;
+      background:var(--surface); border-bottom:1px solid var(--border);
+      flex-shrink:0; transition: background .4s var(--ease), border-color .4s var(--ease);
+    }
+    .alexa-active header {
+      background: linear-gradient(135deg,#07101f 0%,#091828 100%);
+      border-bottom-color: rgba(79,172,254,0.18);
+    }
+
+    .logo {
+      font-family:'Syne',sans-serif; font-size:15px; font-weight:800;
+      letter-spacing:-.4px; color:var(--accent); white-space:nowrap;
+      transition: color .4s var(--ease);
+    }
+    .logo em { color:var(--text-muted); font-style:normal; font-weight:600; }
+
+    /* Alexa ring */
+    .alexa-ring {
+      width:24px; height:24px; border-radius:50%; border:1.5px solid var(--accent);
+      flex-shrink:0; position:relative;
+      opacity:0; transform:scale(.5);
+      transition: opacity .4s var(--ease), transform .4s var(--ease);
+    }
+    .alexa-active .alexa-ring { opacity:1; transform:scale(1); }
+    .alexa-ring::after {
+      content:''; position:absolute; inset:4px; border-radius:50%;
+      background:var(--accent); animation: ring-pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes ring-pulse {
+      0%,100% { opacity:.5; transform:scale(.75); }
+      50%      { opacity:1;  transform:scale(1); }
+    }
+
+    .persona-wrapper { flex:1; min-width:0; }
+    #persona-select {
+      width:100%; background:var(--surface2); border:1px solid var(--border);
+      color:var(--text); font-family:'JetBrains Mono',monospace; font-size:12px;
+      padding:6px 28px 6px 10px; border-radius:var(--radius); outline:none; cursor:pointer;
+      appearance:none; -webkit-appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%235a5a7a' d='M5 7L0 2h10z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 10px center;
+      transition: border-color .2s, opacity .3s;
+    }
+    #persona-select:focus { border-color:var(--accent); }
+    .alexa-active #persona-select { opacity:.35; pointer-events:none; }
+
+    .header-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+
+    .btn-new {
+      background:none; border:1px solid var(--border); color:var(--text-muted);
+      font-family:'JetBrains Mono',monospace; font-size:11px;
+      padding:5px 11px; border-radius:var(--radius); cursor:pointer;
+      white-space:nowrap; transition: border-color .2s, color .2s;
+    }
+    .btn-new:hover { border-color:var(--accent); color:var(--accent); }
+
+    .toggle-wrap { display:flex; align-items:center; gap:7px; cursor:pointer; user-select:none; }
+    .toggle-wrap > span { font-size:11px; color:var(--text-muted); white-space:nowrap;
+      transition: color .4s var(--ease); }
+    .alexa-active .toggle-wrap > span { color:var(--accent); }
+
+    .toggle { position:relative; width:34px; height:19px; flex-shrink:0; }
+    .toggle input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-track {
+      position:absolute; inset:0; background:var(--surface2);
+      border:1px solid var(--border); border-radius:20px; cursor:pointer;
+      transition: background .4s var(--ease), border-color .4s var(--ease);
+    }
+    .toggle-track::after {
+      content:''; position:absolute; left:3px; top:3px;
+      width:11px; height:11px; background:var(--text-muted); border-radius:50%;
+      transition: transform .35s var(--ease), background .4s var(--ease);
+    }
+    .toggle input:checked + .toggle-track { background:var(--accent-dim); border-color:var(--accent); }
+    .toggle input:checked + .toggle-track::after { transform:translateX(15px); background:var(--accent); }
+
+    /* ── CHAT WINDOW ────────────────────────────────────── */
+    .chat-window {
+      flex:1; overflow-y:auto; padding:20px 20px 8px;
+      display:flex; flex-direction:column; gap:14px; scroll-behavior:smooth;
+    }
+    .chat-window::-webkit-scrollbar { width:3px; }
+    .chat-window::-webkit-scrollbar-track { background:transparent; }
+    .chat-window::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+    /* Empty state */
+    .empty-state {
+      flex:1; display:flex; flex-direction:column; align-items:center;
+      justify-content:center; gap:10px; pointer-events:none;
+    }
+    .empty-glyph {
+      font-family:'Syne',sans-serif; font-size:64px; font-weight:800;
+      letter-spacing:-4px; line-height:1;
+      color:transparent;
+      -webkit-text-stroke: 1px var(--text-dim);
+      transition: -webkit-text-stroke-color .4s var(--ease);
+    }
+    .alexa-active .empty-glyph { -webkit-text-stroke-color: rgba(79,172,254,0.2); }
+    .empty-hint { font-size:11px; color:var(--text-muted); opacity:.6; }
+
+    /* Messages */
+    .message { display:flex; flex-direction:column; gap:5px;
+      animation: msg-in .22s ease-out; }
+    @keyframes msg-in {
+      from { opacity:0; transform:translateY(6px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .message.user      { align-items:flex-end; }
+    .message.assistant { align-items:flex-start; }
+    .message.error     { align-items:flex-start; }
+
+    .msg-role { font-size:10px; color:var(--text-dim); letter-spacing:.1em;
+      text-transform:uppercase; padding:0 3px; }
+    .message.user .msg-role { color:var(--accent); opacity:.6; }
+
+    .msg-bubble {
+      max-width:72%; padding:11px 15px;
+      border-radius:var(--radius); font-size:13.5px;
+      line-height:1.75; white-space:pre-wrap; word-break:break-word;
+      transition: border-color .4s var(--ease);
+    }
+    .message.user .msg-bubble {
+      background:var(--surface2); border:1px solid var(--border);
+      border-right:2px solid var(--accent);
+    }
+    .message.assistant .msg-bubble {
+      background:var(--surface); border:1px solid var(--border);
+      border-left:2px solid var(--accent);
+    }
+    .message.error .msg-bubble {
+      background:rgba(255,85,85,.07); border:1px solid rgba(255,85,85,.25);
+      border-left:2px solid var(--error); color:var(--error);
+    }
+
+    .msg-meta { display:flex; gap:5px; flex-wrap:wrap; }
+    .badge {
+      font-size:10px; padding:2px 7px; border-radius:4px;
+      background:var(--surface2); border:1px solid var(--border); color:var(--text-muted);
+    }
+    .badge.lat {
+      color:var(--accent); border-color:var(--accent-dim); background:var(--accent-dim);
+      font-weight:500;
+    }
+
+    /* Loading dots */
+    .loading { display:none; flex-direction:column; gap:5px; align-items:flex-start; }
+    .loading.active { display:flex; animation: msg-in .22s ease-out; }
+    .dots {
+      display:flex; gap:5px; padding:13px 17px;
+      background:var(--surface); border:1px solid var(--border);
+      border-left:2px solid var(--accent); border-radius:var(--radius);
+      transition: border-color .4s var(--ease);
+    }
+    .dots span {
+      width:6px; height:6px; border-radius:50%; background:var(--accent);
+      animation: dot 1.2s ease-in-out infinite;
+      transition: background .4s var(--ease);
+    }
+    .dots span:nth-child(2) { animation-delay:.2s; }
+    .dots span:nth-child(3) { animation-delay:.4s; }
+    @keyframes dot {
+      0%,60%,100% { opacity:.2; transform:scale(.7); }
+      30%          { opacity:1;  transform:scale(1.2); }
+    }
+
+    /* ── FOOTER ─────────────────────────────────────────── */
+    footer {
+      padding:14px 20px 16px; background:var(--surface);
+      border-top:1px solid var(--border); flex-shrink:0;
+      transition: background .4s var(--ease), border-color .4s var(--ease);
+    }
+    .alexa-active footer {
+      background:linear-gradient(135deg,#07101f 0%,#091828 100%);
+      border-top-color:rgba(79,172,254,0.18);
+    }
+
+    .input-row { display:flex; gap:9px; align-items:flex-end; }
+
+    #msg-input {
+      flex:1; background:var(--surface2); border:1px solid var(--border);
+      color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px;
+      padding:10px 13px; border-radius:var(--radius); outline:none;
+      resize:none; min-height:42px; max-height:120px; line-height:1.5;
+      transition: border-color .2s;
+    }
+    #msg-input:focus { border-color:var(--accent); }
+    #msg-input::placeholder { color:var(--text-dim); }
+
+    #send-btn {
+      width:42px; height:42px; flex-shrink:0; position:relative;
+      background:var(--accent-dim); border:1px solid var(--accent); color:var(--accent);
+      border-radius:var(--radius); cursor:pointer; overflow:hidden;
+      transition: background .2s, color .2s, border-color .4s var(--ease);
+    }
+    #send-btn:hover:not(:disabled) { background:var(--accent); color:var(--bg); }
+    #send-btn:disabled { opacity:.35; cursor:not-allowed; }
+
+    .ico {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%) scale(1);
+      width:17px; height:17px;
+      transition: opacity .3s var(--ease), transform .3s var(--ease);
+    }
+    .ico-mic { opacity:0; transform:translate(-50%,-50%) scale(.4); }
+    .alexa-active .ico-send { opacity:0; transform:translate(-50%,-50%) scale(.4); }
+    .alexa-active .ico-mic  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+    .input-hint { margin-top:7px; font-size:10px; color:var(--text-dim); letter-spacing:.03em;
+      transition: color .4s var(--ease); }
+    .alexa-active .input-hint { color:rgba(79,172,254,.3); }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <header>
+    <div class="logo">cafofo<em>·brain</em></div>
+    <div class="alexa-ring"></div>
+    <div class="persona-wrapper">
+      <select id="persona-select"><option>carregando…</option></select>
+    </div>
+    <div class="header-actions">
+      <button class="btn-new" id="btn-new">Nova conversa</button>
+      <label class="toggle-wrap">
+        <span>Modo Alexa</span>
+        <label class="toggle">
+          <input type="checkbox" id="alexa-toggle">
+          <span class="toggle-track"></span>
+        </label>
+      </label>
+    </div>
+  </header>
+
+  <main class="chat-window" id="chat">
+    <div class="empty-state" id="empty">
+      <div class="empty-glyph">brain</div>
+      <div class="empty-hint">selecione uma persona e envie uma mensagem</div>
+    </div>
+    <div class="loading" id="loading">
+      <span class="msg-role">assistente</span>
+      <div class="dots"><span></span><span></span><span></span></div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="input-row">
+      <textarea id="msg-input" placeholder="Digite uma mensagem…" rows="1"></textarea>
+      <button id="send-btn" title="Enviar">
+        <!-- send arrow -->
+        <svg class="ico ico-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        <!-- mic -->
+        <svg class="ico ico-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+    </div>
+    <div class="input-hint">Enter para enviar &nbsp;·&nbsp; Shift+Enter para nova linha</div>
+  </footer>
+
+</div>
+<script>
+  const app         = document.getElementById('app');
+  const chat        = document.getElementById('chat');
+  const empty       = document.getElementById('empty');
+  const loading     = document.getElementById('loading');
+  const input       = document.getElementById('msg-input');
+  const sendBtn     = document.getElementById('send-btn');
+  const personaSel  = document.getElementById('persona-select');
+  const alexaToggle = document.getElementById('alexa-toggle');
+  const btnNew      = document.getElementById('btn-new');
+
+  let context   = [];
+  let busy      = false;
+
+  // ── auto-resize textarea ──────────────────────────────
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  });
+
+  // ── load personas ─────────────────────────────────────
+  async function loadPersonas() {
+    try {
+      const list = await fetch('/personas').then(r => r.json());
+      personaSel.innerHTML = '';
+      list.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.name;
+        o.textContent = `${p.name}  —  ${p.description}`;
+        if (p.name === 'default') o.selected = true;
+        personaSel.appendChild(o);
+      });
+    } catch {
+      personaSel.innerHTML = '<option value="default">default</option>';
+    }
+  }
+
+  // ── add message bubble ────────────────────────────────
+  function addMsg(role, text, meta) {
+    empty.style.display = 'none';
+
+    const wrap = document.createElement('div');
+    wrap.className = `message ${role}`;
+
+    const lbl = document.createElement('span');
+    lbl.className = 'msg-role';
+    lbl.textContent = role === 'user' ? 'você' : role === 'error' ? 'erro' : 'assistente';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+
+    wrap.append(lbl, bubble);
+
+    if (meta) {
+      const m = document.createElement('div');
+      m.className = 'msg-meta';
+      [
+        [`${meta.latency_ms}ms`, 'lat'],
+        [meta.model, ''],
+        [meta.adapter, ''],
+        [`persona: ${meta.persona}`, ''],
+      ].forEach(([t, cls]) => {
+        const b = document.createElement('span');
+        b.className = 'badge ' + cls;
+        b.textContent = t;
+        m.appendChild(b);
+      });
+      wrap.appendChild(m);
+    }
+
+    chat.insertBefore(wrap, loading);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function setLoading(on) {
+    busy = on;
+    sendBtn.disabled = on;
+    loading.classList.toggle('active', on);
+    if (on) chat.scrollTop = chat.scrollHeight;
+  }
+
+  // ── send ──────────────────────────────────────────────
+  async function send() {
+    const text = input.value.trim();
+    if (!text || busy) return;
+
+    const persona = alexaToggle.checked ? 'alexa' : personaSel.value;
+    const ctx     = [...context];
+
+    input.value = '';
+    input.style.height = 'auto';
+    addMsg('user', text);
+    setLoading(true);
+
+    try {
+      const res  = await fetch('/prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persona, message: text, context: ctx }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        addMsg('error', data.error);
+      } else {
+        context.push({ role: 'user',      content: text });
+        context.push({ role: 'assistant', content: data.response });
+        addMsg('assistant', data.response, data);
+      }
+    } catch (e) {
+      addMsg('error', 'Erro de conexão: ' + e.message);
+    } finally {
+      setLoading(false);
+      input.focus();
+    }
+  }
+
+  // ── clear ─────────────────────────────────────────────
+  function newChat() {
+    context = [];
+    chat.querySelectorAll('.message').forEach(m => m.remove());
+    empty.style.display = '';
+  }
+
+  // ── alexa mode ────────────────────────────────────────
+  alexaToggle.addEventListener('change', () => {
+    app.classList.toggle('alexa-active', alexaToggle.checked);
+    if (alexaToggle.checked) {
+      const opt = [...personaSel.options].find(o => o.value === 'alexa');
+      if (opt) personaSel.value = 'alexa';
+      input.placeholder = 'Pergunte algo para a Alexa…';
+    } else {
+      personaSel.value = 'default';
+      input.placeholder = 'Digite uma mensagem…';
+    }
+    input.focus();
+  });
+
+  // ── events ────────────────────────────────────────────
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  sendBtn.addEventListener('click', send);
+  btnNew.addEventListener('click', newChat);
+
+  loadPersonas();
+  input.focus();
+</script>
+</body>
+</html>
