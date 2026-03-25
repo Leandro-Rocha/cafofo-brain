@@ -3,11 +3,8 @@ services:
     image: ghcr.io/leandro-rocha/cafofo-brain:latest
     container_name: cafofo-brain
     restart: unless-stopped
-    environment:
-      - PORT=3030
-      - GROQ_API_KEY=${GROQ_API_KEY:-}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    env_file:
+      - /etc/cafofo/brain.env
     volumes:
       - brain-data:/app/data
     ports:
