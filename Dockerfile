@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --production
 COPY src ./src
+COPY public ./public
 COPY personas.yml ./
 EXPOSE 3030
 CMD ["node", "src/index.js"]
